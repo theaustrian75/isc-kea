@@ -1,0 +1,248 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: kea-dhcp4
+            dockerfile: Dockerfile.kea-dhcp4
+            tag: isc-kea/kea-dhcp4:test
+          - image: kea-dhcp-ddns
+            dockerfile: Dockerfile.kea-dhcp-ddns
+            tag: isc-kea/kea-dhcp-ddns:test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes shellcheck
+
+      - name: Check shell scripts
+        run: |
+          shellcheck entrypoint.sh healthcheck.sh build-latest.sh
+          shellcheck scripts/*.sh tests/*.sh
+
+      - name: Validate Compose configuration
+        if: matrix.image == 'kea-dhcp4'
+        run: |
+          docker compose --env-file .env.example config --format json > /tmp/compose-config.json
+          jq -e '
+            .services["kea-dhcp4"].container_name == "kea-dhcp4-env-test"
+            and .services["kea-dhcp4"].image == "isc-kea/kea-dhcp4:test"
+            and .services["kea-dhcp4"].read_only == true
+            and .services["kea-dhcp4"].network_mode == "host"
+            and .services["kea-dhcp4"].environment.KEA_UID == "12345"
+            and .services["kea-dhcp4"].environment.KEA_GID == "12346"
+            and any(.services["kea-dhcp4"].cap_drop[]; . == "ALL")
+            and any(.services["kea-dhcp4"].cap_add[]; . == "NET_BIND_SERVICE")
+            and any(.services["kea-dhcp4"].cap_add[]; . == "NET_RAW")
+            and any(.services["kea-dhcp4"].cap_add[]; . == "SETUID")
+            and any(.services["kea-dhcp4"].cap_add[]; . == "SETGID")
+            and any(
+              .services["kea-dhcp4"].volumes[];
+              .source == "/tmp/kea-dhcp4-config-test"
+              and .target == "/etc/kea"
+              and .read_only == true
+            )
+            and .services["kea-dhcp-ddns"].container_name == "kea-dhcp-ddns-env-test"
+            and .services["kea-dhcp-ddns"].image == "isc-kea/kea-dhcp-ddns:test"
+            and .services["kea-dhcp-ddns"].environment.KEA_UID == "12345"
+            and .services["kea-dhcp-ddns"].read_only == true
+            and any(.services["kea-dhcp-ddns"].cap_add[]; . == "NET_BIND_SERVICE")
+            and any(.services["kea-dhcp-ddns"].cap_add[]; . == "SETUID")
+            and any(
+              .services["kea-dhcp-ddns"].volumes[];
+              .source == "/tmp/kea-ddns-config-test"
+              and .target == "/etc/kea"
+              and .read_only == true
+            )
+          ' /tmp/compose-config.json
+
+      - name: Build image
+        run: docker build --tag "${{ matrix.tag }}" --file "${{ matrix.dockerfile }}" .
+
+      - name: Run container smoke tests
+        run: |
+          chmod +x tests/*.sh scripts/*.sh entrypoint.sh healthcheck.sh
+          tests/test-container.sh "${{ matrix.tag }}" "${{ matrix.image }}"
+
+      - name: Run cert-expiry checker tests
+        if: matrix.image == 'kea-dhcp4'
+        run: tests/test-cert-expiry.sh
+
+      - name: Run HA pairwise smoke test
+        if: matrix.image == 'kea-dhcp4'
+        run: tests/test-ha.sh "${{ matrix.tag }}"
+
+      - name: Validate example configs (-t)
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/kea-ex/{run,lib,certs}
+          chmod 750 /tmp/kea-ex/run
+          # Example HA config references TLS paths — provide disposable material.
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=ca" \
+            -keyout /tmp/kea-ex/certs/ca.key -out /tmp/kea-ex/certs/ca.pem >/dev/null 2>&1
+          cp /tmp/kea-ex/certs/ca.pem /tmp/kea-ex/certs/cert.pem
+          openssl genrsa -out /tmp/kea-ex/certs/key.pem 2048 >/dev/null 2>&1
+          case "${{ matrix.image }}" in
+            kea-dhcp4)
+              cp config/examples/kea-dhcp4-ha.json /tmp/kea-ex/kea-dhcp4.json
+              docker run --rm \
+                -v /tmp/kea-ex:/etc/kea:ro \
+                -v /tmp/kea-ex/run:/run/kea \
+                -v /tmp/kea-ex/lib:/var/lib/kea \
+                --entrypoint /usr/sbin/kea-dhcp4 \
+                "${{ matrix.tag }}" -t /etc/kea/kea-dhcp4.json
+              ;;
+            kea-dhcp-ddns)
+              cp config/examples/kea-dhcp-ddns.json /tmp/kea-ex/kea-dhcp-ddns.json
+              docker run --rm \
+                -v /tmp/kea-ex:/etc/kea:ro \
+                -v /tmp/kea-ex/run:/run/kea \
+                --entrypoint /usr/sbin/kea-dhcp-ddns \
+                "${{ matrix.tag }}" -t /etc/kea/kea-dhcp-ddns.json
+              ;;
+          esac
+
+  docker:
+    runs-on: ${{ matrix.runner }}
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: kea-dhcp4
+            dockerfile: Dockerfile.kea-dhcp4
+            description: ISC Kea DHCPv4 with HA and lease-cmds hooks
+            platform: linux/amd64
+            runner: ubuntu-24.04
+            arch: amd64
+          - image: kea-dhcp4
+            dockerfile: Dockerfile.kea-dhcp4
+            description: ISC Kea DHCPv4 with HA and lease-cmds hooks
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+          - image: kea-dhcp-ddns
+            dockerfile: Dockerfile.kea-dhcp-ddns
+            description: ISC Kea DHCP DDNS daemon
+            platform: linux/amd64
+            runner: ubuntu-24.04
+            arch: amd64
+          - image: kea-dhcp-ddns
+            dockerfile: Dockerfile.kea-dhcp-ddns
+            description: ISC Kea DHCP DDNS daemon
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+          flavor: suffix=-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.description=${{ matrix.description }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platform }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          sbom: false
+          outputs: ${{ github.event_name != 'pull_request' && 'type=registry,oci-mediatypes=false' || 'type=image,oci-mediatypes=false' }}
+          annotations: |
+            manifest:org.opencontainers.image.description=${{ matrix.description }}
+
+  docker-merge:
+    runs-on: ubuntu-24.04
+    needs: docker
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: kea-dhcp4
+            description: ISC Kea DHCPv4 with HA and lease-cmds hooks
+          - image: kea-dhcp-ddns
+            description: ISC Kea DHCP DDNS daemon
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Create and push multi-arch manifest
+        env:
+          DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}
+          IMAGE_DESCRIPTION: ${{ matrix.description }}
+        run: |
+          set -euo pipefail
+          jq -cr '.tags[]' <<< "$DOCKER_METADATA_OUTPUT_JSON" | while read -r tag; do
+            repo="${tag%%:*}"
+            name="${tag##*:}"
+            docker buildx imagetools create \
+              --annotation "index:org.opencontainers.image.description=${IMAGE_DESCRIPTION}" \
+              -t "$tag" \
+              "${repo}:${name}-amd64" \
+              "${repo}:${name}-arm64"
+          done

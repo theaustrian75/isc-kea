@@ -1,38 +1,69 @@
 # ISC Kea containers
 
-Alpine-based images for **kea-dhcp4** (with HA + lease-cmds hooks) and **kea-dhcp-ddns**.
+Alpine 3.24 images for **kea-dhcp4** (HA + lease-cmds) and **kea-dhcp-ddns**.
 
-Config and TLS material are **not** baked into the images — mount `/etc/kea` (and related volumes) at runtime.
+Config and TLS material are mounted at runtime. The process drops to configurable `KEA_UID`/`KEA_GID` via `setpriv`.
 
 ## Images
 
-| Dockerfile | Packages | Ports |
+| Dockerfile | Packages | GHCR |
 |---|---|---|
-| `Dockerfile.kea-dhcp4` | `kea-dhcp4`, `kea-hook-ha`, `kea-hook-lease-cmds` | 67/tcp+udp |
-| `Dockerfile.kea-dhcp-ddns` | `kea-dhcp-ddns` | 53001/udp |
+| `Dockerfile.kea-dhcp4` | `kea-dhcp4`, `kea-hook-ha`, `kea-hook-lease-cmds` | `ghcr.io/theaustrian75/isc-kea/kea-dhcp4` |
+| `Dockerfile.kea-dhcp-ddns` | `kea-dhcp-ddns` | `ghcr.io/theaustrian75/isc-kea/kea-dhcp-ddns` |
+
+Tags: `latest` (default branch), `main`, `sha-*`, and `v*` releases. Multi-arch (`amd64` / `arm64`).
+
+Build args / runtime env (both images):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `KEA_UID` | `100` | Numeric UID after privilege drop |
+| `KEA_GID` | `101` | Numeric GID after privilege drop |
+| `TZ` | `UTC` | IANA timezone |
+| `SKIP_CONFIG_TEST` | `false` | Skip `kea-*-t` before start |
 
 ## Build & test
 
 ```bash
-make build          # build both
-make test           # build + smoke-test both
+docker build --tag isc-kea/kea-dhcp4:test --file Dockerfile.kea-dhcp4 .
+docker build --tag isc-kea/kea-dhcp-ddns:test --file Dockerfile.kea-dhcp-ddns .
+
+tests/test-container.sh isc-kea/kea-dhcp4:test kea-dhcp4
+tests/test-container.sh isc-kea/kea-dhcp-ddns:test kea-dhcp-ddns
+tests/test-ha.sh isc-kea/kea-dhcp4:test
+tests/test-cert-expiry.sh
 ```
 
-Requires Docker (or set `DOCKER=podman`).
+CI mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-ldap-proxy): validate → per-arch GHCR push → multi-arch merge.
 
-CI (GitHub Actions) builds each image, runs smoke tests, then verifies a multi-arch (`amd64`/`arm64`) build.
+## Compose / Quadlet
 
-## Publish (local registry)
+```bash
+cp .env.example .env
+# put kea-*.json (+ certs) under the configured config dirs
+docker compose up -d
+```
 
-`build-latest.sh` builds multi-arch manifests with Podman and pushes to `registry.klausk.xyz`. It expects a Podman secret `dn-registry-password`. Prefer running that only on a trusted builder — the script also prunes unused images aggressively.
+Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
+
+Example configs (including HA + TLS paths): `config/examples/`.
 
 ## PKI
 
-Internal CA + host certs for Kea TLS live under `pki/` but **private keys are gitignored**. See [docs/PKI.md](docs/PKI.md).
+Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 
 ```bash
-./scripts/pki-init-ca.sh          # once
-./scripts/pki-issue-host.sh odin  # per host (odin, tyr, …)
+./scripts/pki-init-ca.sh
+./scripts/pki-issue-host.sh odin
+./scripts/check-cert-expiry.sh   # fails if a leaf expires within 30 days
+```
+
+## Private registry (opt-in)
+
+GHCR is the default publish path. To push to `registry.klausk.xyz`:
+
+```bash
+PUSH_PRIVATE_REGISTRY=1 ./build-latest.sh
 ```
 
 ## Runtime volumes

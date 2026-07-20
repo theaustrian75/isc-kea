@@ -28,6 +28,13 @@ pki/**/*.csr
 *~
 .env
 .env.*
+!.env.example
+
+# Runtime config bind mounts (site kea JSON + certs) — keep examples tracked
+/config/kea-dhcp4/
+/config/kea-dhcp-ddns/
+!/config/examples/
+!/config/examples/**
 
 # Build artifacts
 *.tar
