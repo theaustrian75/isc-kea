@@ -90,12 +90,14 @@ if grep -Eq '/etc/kea/certs/' "$CONFIG" 2>/dev/null; then
 fi
 
 mkdir -p /run/kea
-chmod 0750 /run/kea
-chown "${KEA_UID}:${KEA_GID}" /run/kea
+# Prefer orchestrator tmpfs options (mode=0750,uid=,gid=). chmod/chown on an
+# already-mounted tmpfs often returns EPERM under no-new-privileges.
+chmod 0750 /run/kea 2>/dev/null || true
+chown "${KEA_UID}:${KEA_GID}" /run/kea 2>/dev/null || true
 
 if [ "$NEED_LEASE_DIR" = true ]; then
   mkdir -p /var/lib/kea
-  chown "${KEA_UID}:${KEA_GID}" /var/lib/kea
+  chown "${KEA_UID}:${KEA_GID}" /var/lib/kea 2>/dev/null || true
 fi
 
 if [ "$SKIP_CONFIG_TEST" = false ]; then
