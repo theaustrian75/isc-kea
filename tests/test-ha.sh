@@ -1,5 +1,6 @@
 #!/bin/sh
 # Pairwise HA smoke: two kea-dhcp4 peers on a bridge network with lease-cmds + HA.
+# Kea HA peer URLs must be IP literals (hostnames are rejected).
 # Usage: tests/test-ha.sh IMAGE
 set -eu
 
@@ -9,6 +10,8 @@ TMP=$(mktemp -d)
 NET="kea-ha-test-$$"
 PRIMARY="kea-odin-$$"
 STANDBY="kea-tyr-$$"
+ODIN_IP=172.30.97.10
+TYR_IP=172.30.97.11
 
 # Invoked through trap.
 # shellcheck disable=SC2317
@@ -19,11 +22,17 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+render() {
+  peer=$1
+  sed -e "s/@@PEER@@/${peer}/g" \
+      -e "s/@@ODIN_IP@@/${ODIN_IP}/g" \
+      -e "s/@@TYR_IP@@/${TYR_IP}/g" \
+      "$ROOT/tests/fixtures/kea-dhcp4-ha.json.template"
+}
+
 mkdir -p "$TMP/odin" "$TMP/tyr"
-sed 's/@@PEER@@/odin/g' "$ROOT/tests/fixtures/kea-dhcp4-ha.json.template" \
-  > "$TMP/odin/kea-dhcp4.json"
-sed 's/@@PEER@@/tyr/g' "$ROOT/tests/fixtures/kea-dhcp4-ha.json.template" \
-  > "$TMP/tyr/kea-dhcp4.json"
+render odin > "$TMP/odin/kea-dhcp4.json"
+render tyr > "$TMP/tyr/kea-dhcp4.json"
 
 # Config syntax + HA hook load for each peer identity.
 for peer in odin tyr; do
@@ -35,13 +44,14 @@ for peer in odin tyr; do
     "$IMAGE" -t /etc/kea/kea-dhcp4.json
 done
 
-docker network create "$NET" >/dev/null
+docker network create --subnet=172.30.97.0/24 "$NET" >/dev/null
 
 run_peer() {
   name=$1
   peer=$2
+  ip=$3
   docker run -d --name "$name" \
-    --network "$NET" --network-alias "kea-$peer" \
+    --network "$NET" --ip "$ip" \
     --read-only \
     --security-opt no-new-privileges:true \
     --cap-drop ALL \
@@ -56,8 +66,8 @@ run_peer() {
     "$IMAGE" >/dev/null
 }
 
-run_peer "$PRIMARY" odin
-run_peer "$STANDBY" tyr
+run_peer "$PRIMARY" odin "$ODIN_IP"
+run_peer "$STANDBY" tyr "$TYR_IP"
 
 wait_healthy() {
   container=$1
@@ -85,19 +95,10 @@ wait_healthy() {
 wait_healthy "$PRIMARY"
 wait_healthy "$STANDBY"
 
-# Give HA heartbeats a moment, then confirm both processes still up.
 sleep 3
 docker exec "$PRIMARY" pidof kea-dhcp4 >/dev/null
 docker exec "$STANDBY" pidof kea-dhcp4 >/dev/null
-
-# Lease-cmds / HA libraries must be loaded (hot-standby mode in logs or config path).
-logs=$(docker logs "$PRIMARY" 2>&1)
-case "$logs" in
-  *HA*|*ha*|*hot-standby*|*Availability*) ;;
-  *)
-    # Still accept if control socket exists — HA may be quiet at INFO.
-    docker exec "$PRIMARY" /bin/sh -c 'test -e /run/kea/kea4-ctrl-socket'
-    ;;
-esac
+docker exec "$PRIMARY" /bin/sh -c 'test -e /run/kea/kea4-ctrl-socket'
+docker exec "$STANDBY" /bin/sh -c 'test -e /run/kea/kea4-ctrl-socket'
 
 echo "HA pairwise smoke test passed"

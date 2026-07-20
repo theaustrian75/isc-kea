@@ -31,13 +31,13 @@
               "peers": [
                 {
                   "name": "odin",
-                  "url": "http://kea-odin:8000/",
+                  "url": "http://@@ODIN_IP@@:8000/",
                   "role": "primary",
                   "auto-failover": true
                 },
                 {
                   "name": "tyr",
-                  "url": "http://kea-tyr:8000/",
+                  "url": "http://@@TYR_IP@@:8000/",
                   "role": "standby",
                   "auto-failover": true
                 }
