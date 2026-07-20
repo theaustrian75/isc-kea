@@ -1,7 +1,0 @@
-#!/bin/sh
-set -e
-
-# Remove stale PID file if present
-rm -f /run/kea/kea-dhcp-ddns.kea-dhcp-ddns.pid
-
-exec /usr/sbin/kea-dhcp-ddns -c /etc/kea/kea-dhcp-ddns.json

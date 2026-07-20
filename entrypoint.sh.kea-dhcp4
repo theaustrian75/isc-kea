@@ -1,7 +1,0 @@
-#!/bin/sh
-set -e
-
-# Remove stale PID file if present
-rm -f /run/kea/kea-dhcp4.kea-dhcp4.pid
-
-exec /usr/sbin/kea-dhcp4 -c /etc/kea/kea-dhcp4.json

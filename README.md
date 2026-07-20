@@ -1,8 +1,8 @@
 # ISC Kea containers
 
-Alpine-based images for **kea-dhcp4** (with HA + lease-cmds hooks) and **kea-dhcp-ddns**.
+Alpine 3.24 images for **kea-dhcp4** (HA + lease-cmds) and **kea-dhcp-ddns**.
 
-Config and TLS material are **not** baked into the images — mount `/etc/kea` at runtime.
+Config and TLS material are mounted at runtime. The process drops to configurable `KEA_UID`/`KEA_GID` via `setpriv`.
 
 ## Images
 
@@ -11,7 +11,16 @@ Config and TLS material are **not** baked into the images — mount `/etc/kea` a
 | `Dockerfile.kea-dhcp4` | `kea-dhcp4`, `kea-hook-ha`, `kea-hook-lease-cmds` | `ghcr.io/theaustrian75/isc-kea/kea-dhcp4` |
 | `Dockerfile.kea-dhcp-ddns` | `kea-dhcp-ddns` | `ghcr.io/theaustrian75/isc-kea/kea-dhcp-ddns` |
 
-Tags: `latest` (default branch), `main`, `sha-<git>`, and `v*` release tags. Multi-arch (`amd64` / `arm64`).
+Tags: `latest` (default branch), `main`, `sha-*`, and `v*` releases. Multi-arch (`amd64` / `arm64`).
+
+Build args / runtime env (both images):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `KEA_UID` | `100` | Numeric UID after privilege drop |
+| `KEA_GID` | `101` | Numeric GID after privilege drop |
+| `TZ` | `UTC` | IANA timezone |
+| `SKIP_CONFIG_TEST` | `false` | Skip `kea-*-t` before start |
 
 ## Build & test
 
@@ -21,37 +30,40 @@ docker build --tag isc-kea/kea-dhcp-ddns:test --file Dockerfile.kea-dhcp-ddns .
 
 tests/test-container.sh isc-kea/kea-dhcp4:test kea-dhcp4
 tests/test-container.sh isc-kea/kea-dhcp-ddns:test kea-dhcp-ddns
+tests/test-ha.sh isc-kea/kea-dhcp4:test
+tests/test-cert-expiry.sh
 ```
 
-Pushes to `main` publish `main`, `sha-*`, and `latest` tags to GHCR. Tags starting with `v` also publish a matching release tag. Pull requests validate and build both architectures without publishing.
+CI mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-ldap-proxy): validate → per-arch GHCR push → multi-arch merge.
 
-## CI pipeline
-
-Mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-ldap-proxy):
-
-1. **validate** — ShellCheck, compose config assertions, image build, `tests/test-container.sh`
-2. **docker** — native `amd64` / `arm64` builds pushed to GHCR (skipped on PRs)
-3. **docker-merge** — multi-arch manifests
-
-## Compose
+## Compose / Quadlet
 
 ```bash
-cp .env.example .env   # adjust image tags / config bind mounts
-# put kea-*.json (and certs) under the configured config dirs
+cp .env.example .env
+# put kea-*.json (+ certs) under the configured config dirs
 docker compose up -d
 ```
 
-## Publish (private registry)
+Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
 
-`build-latest.sh` still builds multi-arch manifests with Podman for `registry.klausk.xyz` (Podman secret `dn-registry-password`). CI publishes to GHCR; use the script when you need the dragonsnest registry.
+Example configs (including HA + TLS paths): `config/examples/`.
 
 ## PKI
 
-Internal CA + host certs live under `pki/` but **private keys are gitignored**. See [docs/PKI.md](docs/PKI.md).
+Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 
 ```bash
 ./scripts/pki-init-ca.sh
 ./scripts/pki-issue-host.sh odin
+./scripts/check-cert-expiry.sh   # fails if a leaf expires within 30 days
+```
+
+## Private registry (opt-in)
+
+GHCR is the default publish path. To push to `registry.klausk.xyz`:
+
+```bash
+PUSH_PRIVATE_REGISTRY=1 ./build-latest.sh
 ```
 
 ## Runtime volumes

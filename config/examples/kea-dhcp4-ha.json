@@ -1,0 +1,68 @@
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [ "eth0" ],
+      "dhcp-socket-type": "raw"
+    },
+    "control-socket": {
+      "socket-type": "unix",
+      "socket-name": "/run/kea/kea4-ctrl-socket"
+    },
+    "lease-database": {
+      "type": "memfile",
+      "persist": true,
+      "name": "/var/lib/kea/dhcp4.leases"
+    },
+    "hooks-libraries": [
+      {
+        "library": "/usr/lib/kea/hooks/libdhcp_lease_cmds.so"
+      },
+      {
+        "library": "/usr/lib/kea/hooks/libdhcp_ha.so",
+        "parameters": {
+          "high-availability": [
+            {
+              "this-server-name": "odin",
+              "mode": "hot-standby",
+              "heartbeat-delay": 10000,
+              "max-response-delay": 60000,
+              "max-ack-delay": 5000,
+              "max-unacked-clients": 5,
+              "trust-anchor": "/etc/kea/certs/ca.pem",
+              "cert-file": "/etc/kea/certs/cert.pem",
+              "key-file": "/etc/kea/certs/key.pem",
+              "peers": [
+                {
+                  "name": "odin",
+                  "url": "https://odin.oob.klausk.xyz:8001/",
+                  "role": "primary",
+                  "auto-failover": true
+                },
+                {
+                  "name": "tyr",
+                  "url": "https://tyr.oob.klausk.xyz:8001/",
+                  "role": "standby",
+                  "auto-failover": true
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "subnet4": [
+      {
+        "id": 1,
+        "subnet": "10.0.0.0/24",
+        "pools": [ { "pool": "10.0.0.100 - 10.0.0.200" } ]
+      }
+    ],
+    "loggers": [
+      {
+        "name": "kea-dhcp4",
+        "output_options": [ { "output": "stdout" } ],
+        "severity": "INFO"
+      }
+    ]
+  }
+}

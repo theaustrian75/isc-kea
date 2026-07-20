@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
-# Multi-arch build + push to the private registry.
-# Requires: podman, logged-in credentials via Podman secret dn-registry-password
+# Multi-arch build + push to the private dragonsnest registry.
+# Opt-in only — CI publishes to GHCR by default.
+#
+#   PUSH_PRIVATE_REGISTRY=1 ./build-latest.sh
+#
+# Requires: podman, Podman secret dn-registry-password
 set -euo pipefail
+
+if [[ "${PUSH_PRIVATE_REGISTRY:-}" != "1" ]]; then
+  echo "Refusing to push to the private registry." >&2
+  echo "CI publishes multi-arch images to GHCR on main/tag pushes." >&2
+  echo "Set PUSH_PRIVATE_REGISTRY=1 to build and push to registry.klausk.xyz." >&2
+  exit 1
+fi
 
 REGISTRY="${REGISTRY:-registry.klausk.xyz:8443}"
 REPOSITORY="${REPOSITORY:-repositories/dragonsnest}"
