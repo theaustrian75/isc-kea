@@ -16,12 +16,14 @@ Tags: `latest` (default branch), `main`, `sha-<git>`, and `v*` release tags. Mul
 ## Build & test
 
 ```bash
-make build          # build both
-make test           # build + smoke-test both (same checks as CI validate)
-make shellcheck     # lint entrypoints and scripts
+docker build --tag isc-kea/kea-dhcp4:test --file Dockerfile.kea-dhcp4 .
+docker build --tag isc-kea/kea-dhcp-ddns:test --file Dockerfile.kea-dhcp-ddns .
+
+tests/test-container.sh isc-kea/kea-dhcp4:test kea-dhcp4
+tests/test-container.sh isc-kea/kea-dhcp-ddns:test kea-dhcp-ddns
 ```
 
-Requires Docker (or set `DOCKER=podman`).
+Pushes to `main` publish `main`, `sha-*`, and `latest` tags to GHCR. Tags starting with `v` also publish a matching release tag. Pull requests validate and build both architectures without publishing.
 
 ## CI pipeline
 
