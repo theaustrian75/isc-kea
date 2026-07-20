@@ -1,0 +1,34 @@
+# Private key material — never commit
+*.key
+*.p12
+*.pfx
+*.pem
+!pki/**/*.cnf
+
+# OpenSSL CA working state
+pki/index.txt
+pki/index.txt.old
+pki/index.txt.attr
+pki/index.txt.attr.old
+pki/serial
+pki/serial.old
+pki/certs/
+pki/newcerts/
+pki/crl/
+pki/*.csr
+pki/**/*.csr
+
+# Keep openssl configs and docs
+!pki/**/openssl.cnf
+!pki/README.md
+
+# Local / editor
+.DS_Store
+*.swp
+*~
+.env
+.env.*
+
+# Build artifacts
+*.tar
+*.tar.gz

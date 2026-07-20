@@ -1,0 +1,2 @@
+# Reminder: leaf certs are issued for 825 days (see pki/openssl.cnf default_days).
+# Current odin/tyr leaves expire ~2028-06-10. Renewal steps: docs/PKI.md

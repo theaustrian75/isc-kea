@@ -1,0 +1,10 @@
+# Everything under pki is secret by default except configs and docs
+*
+!.gitignore
+!README.md
+!openssl.cnf
+!**/openssl.cnf
+!odin/
+!tyr/
+!odin/openssl.cnf
+!tyr/openssl.cnf

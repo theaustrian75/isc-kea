@@ -1,0 +1,21 @@
+# Alpine-based ISC Kea DHCP DDNS (multi-arch: amd64/arm64)
+FROM alpine:latest
+LABEL org.opencontainers.image.authors="admin@klausk.xyz" \
+      org.opencontainers.image.title="kea-dhcp-ddns" \
+      org.opencontainers.image.description="ISC Kea DHCP DDNS daemon"
+
+RUN apk --no-cache upgrade \
+ && apk --no-cache add \
+        kea-dhcp-ddns \
+        curl \
+        jq
+
+COPY entrypoint.sh.kea-dhcp-ddns /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# TLS certs and kea-*.json are mounted here at runtime — never bake secrets into the image
+VOLUME [ "/etc/kea", "/run/kea" ]
+
+EXPOSE 53001/udp
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
