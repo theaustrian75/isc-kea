@@ -88,14 +88,18 @@ assert_failure "$CONFIG_NAME" \
   docker run --rm "$IMAGE"
 
 # Prepare a writable config + state tree for a hardened runtime smoke start.
+# Kea 3.x requires the control-socket directory to exist with mode <= 750.
 mkdir -p "$TMP_ROOT/etc" "$TMP_ROOT/lib" "$TMP_ROOT/run"
 cp "$ROOT/tests/fixtures/$CONFIG_NAME" "$TMP_ROOT/etc/$CONFIG_NAME"
-chmod 755 "$TMP_ROOT" "$TMP_ROOT/etc" "$TMP_ROOT/lib" "$TMP_ROOT/run"
+chmod 755 "$TMP_ROOT" "$TMP_ROOT/etc" "$TMP_ROOT/lib"
+chmod 750 "$TMP_ROOT/run"
 chmod 644 "$TMP_ROOT/etc/$CONFIG_NAME"
 
-# Config syntax check.
+# Config syntax check (mount /run/kea so control-socket path validation passes).
 docker run --rm \
   -v "$TMP_ROOT/etc:/etc/kea:ro" \
+  -v "$TMP_ROOT/run:/run/kea" \
+  -v "$TMP_ROOT/lib:/var/lib/kea" \
   --entrypoint "$BIN" \
   "$IMAGE" -t "/etc/kea/$CONFIG_NAME"
 
@@ -111,8 +115,8 @@ case "$ROLE" in
       --pids-limit 128 \
       --memory 256m \
       -v "$TMP_ROOT/etc:/etc/kea:ro" \
-      --tmpfs /run/kea:rw,mode=0755,size=16m \
-      --tmpfs /var/lib/kea:rw,mode=0755,size=32m \
+      --tmpfs /run/kea:rw,mode=0750,size=16m \
+      --tmpfs /var/lib/kea:rw,mode=0750,size=32m \
       --tmpfs /tmp:rw,mode=1777,size=16m \
       "$IMAGE" >/dev/null
     ;;
@@ -125,7 +129,7 @@ case "$ROLE" in
       --pids-limit 128 \
       --memory 256m \
       -v "$TMP_ROOT/etc:/etc/kea:ro" \
-      --tmpfs /run/kea:rw,mode=0755,size=16m \
+      --tmpfs /run/kea:rw,mode=0750,size=16m \
       --tmpfs /tmp:rw,mode=1777,size=16m \
       "$IMAGE" >/dev/null
     ;;

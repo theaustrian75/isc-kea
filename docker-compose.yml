@@ -26,7 +26,7 @@ services:
       - ${KEA_DHCP4_CONFIG_DIR:-./config/kea-dhcp4}:/etc/kea:ro
       - kea-dhcp4-data:/var/lib/kea
     tmpfs:
-      - /run/kea:rw,mode=0755,size=16m
+      - /run/kea:rw,mode=0750,size=16m
       - /tmp:rw,mode=1777,size=16m
     network_mode: host
     restart: unless-stopped
@@ -47,7 +47,7 @@ services:
     volumes:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
     tmpfs:
-      - /run/kea:rw,mode=0755,size=16m
+      - /run/kea:rw,mode=0750,size=16m
       - /tmp:rw,mode=1777,size=16m
     network_mode: host
     restart: unless-stopped
