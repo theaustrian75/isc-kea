@@ -1,0 +1,10 @@
+.git
+.env
+config/
+pki/**/*.key
+pki/**/*.pem
+pki/certs/
+pki/index.txt*
+pki/serial*
+*.tar
+*.tar.gz

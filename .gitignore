@@ -28,6 +28,10 @@ pki/**/*.csr
 *~
 .env
 .env.*
+!.env.example
+
+# Runtime config bind mounts (certs + site kea JSON)
+/config/
 
 # Build artifacts
 *.tar
