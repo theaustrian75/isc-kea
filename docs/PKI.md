@@ -23,15 +23,21 @@ This tree is a small OpenSSL “Thor Internal CA” used for Kea mutual TLS (HA 
 
 ### 2. Mount certs at runtime — never bake into images
 
-These Dockerfiles intentionally omit TLS material. On each node:
+These Dockerfiles intentionally omit TLS material. Prefer separate trees for
+the HTTPS **control** socket and **HA** peers (they can still share one CA):
 
 ```text
-/etc/kea/certs/<host>.pem   # leaf cert
-/etc/kea/certs/<host>.key   # leaf key (mode 600, owned by kea user if applicable)
-/etc/kea/certs/ca.pem       # Thor_CA.pem
+/etc/kea/certs/control/ca.pem
+/etc/kea/certs/control/cert.pem
+/etc/kea/certs/control/key.pem
+/etc/kea/certs/ha/ca.pem
+/etc/kea/certs/ha/cert.pem
+/etc/kea/certs/ha/key.pem
 ```
 
-Wire those paths in `kea-*.json` (`trust-anchor`, `cert-file`, `key-file`). Use bind mounts or Podman/Kubernetes secrets — same pattern as `/etc/kea` config.
+Wire those paths in `kea-*.json` (`trust-anchor`, `cert-file`, `key-file` on
+the control socket and in the HA hook). Compose/Quadlet mount host dirs onto
+`/etc/kea/certs/control` and `/etc/kea/certs/ha`.
 
 ### 3. Renewal (825-day leaves)
 

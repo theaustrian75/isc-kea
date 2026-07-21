@@ -42,12 +42,13 @@ CI mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-lda
 
 ```bash
 cp .env.example .env
-# kea-*.json  -> *_CONFIG_DIR (default ./config/kea-dhcp4, ./config/kea-dhcp-ddns)
-# ca/cert/key -> *_CERT_DIR   (default ./certs/kea-dhcp4, ./certs/kea-dhcp-ddns)
+# kea-*.json           -> *_CONFIG_DIR
+# control ca/cert/key  -> *_CONTROL_CERT_DIR  (/etc/kea/certs/control)
+# HA ca/cert/key       -> *_HA_CERT_DIR       (/etc/kea/certs/ha, dhcp4 only)
 docker compose up -d
 ```
 
-Certs mount at `/etc/kea/certs` (`ca.pem`, `cert.pem`, `key.pem`). See `config/examples/certs/README.md`.
+Control and HA can use different leaves (or point both env dirs at the same host path). See `config/examples/certs/README.md`.
 
 Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
 
@@ -65,5 +66,5 @@ Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 
 ## Runtime volumes
 
-**kea-dhcp4:** `/etc/kea`, `/etc/kea/certs`, `/var/lib/kea`, `/run/kea`  
-**kea-dhcp-ddns:** `/etc/kea`, `/etc/kea/certs`, `/run/kea`
+**kea-dhcp4:** `/etc/kea`, `/etc/kea/certs/control`, `/etc/kea/certs/ha`, `/var/lib/kea`, `/run/kea`  
+**kea-dhcp-ddns:** `/etc/kea`, `/etc/kea/certs/control`, `/run/kea`

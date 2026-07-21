@@ -11,9 +11,9 @@
         "socket-type": "https",
         "socket-address": "0.0.0.0",
         "socket-port": 8002,
-        "trust-anchor": "/etc/kea/certs/ca.pem",
-        "cert-file": "/etc/kea/certs/cert.pem",
-        "key-file": "/etc/kea/certs/key.pem"
+        "trust-anchor": "/etc/kea/certs/control/ca.pem",
+        "cert-file": "/etc/kea/certs/control/cert.pem",
+        "key-file": "/etc/kea/certs/control/key.pem"
       }
     ],
     "forward-ddns": {

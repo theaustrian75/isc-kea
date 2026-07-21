@@ -13,9 +13,9 @@
         "socket-type": "https",
         "socket-address": "0.0.0.0",
         "socket-port": 8001,
-        "trust-anchor": "/etc/kea/certs/ca.pem",
-        "cert-file": "/etc/kea/certs/cert.pem",
-        "key-file": "/etc/kea/certs/key.pem"
+        "trust-anchor": "/etc/kea/certs/control/ca.pem",
+        "cert-file": "/etc/kea/certs/control/cert.pem",
+        "key-file": "/etc/kea/certs/control/key.pem"
       }
     ],
     "lease-database": {
@@ -38,19 +38,19 @@
               "max-response-delay": 60000,
               "max-ack-delay": 5000,
               "max-unacked-clients": 5,
-              "trust-anchor": "/etc/kea/certs/ca.pem",
-              "cert-file": "/etc/kea/certs/cert.pem",
-              "key-file": "/etc/kea/certs/key.pem",
+              "trust-anchor": "/etc/kea/certs/ha/ca.pem",
+              "cert-file": "/etc/kea/certs/ha/cert.pem",
+              "key-file": "/etc/kea/certs/ha/key.pem",
               "peers": [
                 {
                   "name": "odin",
-                  "url": "https://odin.oob.klausk.xyz:8001/",
+                  "url": "https://odin.oob.klausk.xyz:8000/",
                   "role": "primary",
                   "auto-failover": true
                 },
                 {
                   "name": "tyr",
-                  "url": "https://tyr.oob.klausk.xyz:8001/",
+                  "url": "https://tyr.oob.klausk.xyz:8000/",
                   "role": "standby",
                   "auto-failover": true
                 }

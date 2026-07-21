@@ -66,8 +66,14 @@ jobs:
             )
             and any(
               .services["kea-dhcp4"].volumes[];
-              .source == "/tmp/kea-dhcp4-cert-test"
-              and .target == "/etc/kea/certs"
+              .source == "/tmp/kea-dhcp4-control-cert-test"
+              and .target == "/etc/kea/certs/control"
+              and .read_only == true
+            )
+            and any(
+              .services["kea-dhcp4"].volumes[];
+              .source == "/tmp/kea-dhcp4-ha-cert-test"
+              and .target == "/etc/kea/certs/ha"
               and .read_only == true
             )
             and .services["kea-dhcp-ddns"].container_name == "kea-dhcp-ddns-env-test"
@@ -85,8 +91,8 @@ jobs:
             )
             and any(
               .services["kea-dhcp-ddns"].volumes[];
-              .source == "/tmp/kea-ddns-cert-test"
-              and .target == "/etc/kea/certs"
+              .source == "/tmp/kea-ddns-control-cert-test"
+              and .target == "/etc/kea/certs/control"
               and .read_only == true
             )
           ' /tmp/compose-config.json
@@ -110,13 +116,16 @@ jobs:
       - name: Validate example configs (-t)
         run: |
           set -euo pipefail
-          mkdir -p /tmp/kea-ex/{run,lib,certs}
+          mkdir -p /tmp/kea-ex/{run,lib,certs/control,certs/ha}
           chmod 750 /tmp/kea-ex/run
-          # Example HA config references TLS paths — provide disposable material.
-          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=ca" \
-            -keyout /tmp/kea-ex/certs/ca.key -out /tmp/kea-ex/certs/ca.pem >/dev/null 2>&1
-          cp /tmp/kea-ex/certs/ca.pem /tmp/kea-ex/certs/cert.pem
-          openssl genrsa -out /tmp/kea-ex/certs/key.pem 2048 >/dev/null 2>&1
+          # Example configs reference separate control vs HA TLS trees.
+          for role in control ha; do
+            openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=${role}-ca" \
+              -keyout "/tmp/kea-ex/certs/${role}/ca.key" \
+              -out "/tmp/kea-ex/certs/${role}/ca.pem" >/dev/null 2>&1
+            cp "/tmp/kea-ex/certs/${role}/ca.pem" "/tmp/kea-ex/certs/${role}/cert.pem"
+            openssl genrsa -out "/tmp/kea-ex/certs/${role}/key.pem" 2048 >/dev/null 2>&1
+          done
           case "${{ matrix.image }}" in
             kea-dhcp4)
               cp config/examples/kea-dhcp4-ha.json /tmp/kea-ex/kea-dhcp4.json

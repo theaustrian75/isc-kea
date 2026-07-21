@@ -1,14 +1,21 @@
-# TLS layout for the `/etc/kea/certs` volume mount.
+# TLS layout under `/etc/kea/certs/` — control API and HA use separate trees.
 #
-# Compose defaults:
-#   ./certs/kea-dhcp4      -> /etc/kea/certs  (kea-dhcp4)
-#   ./certs/kea-dhcp-ddns  -> /etc/kea/certs  (kea-dhcp-ddns)
+# Compose defaults (dhcp4):
+#   ./certs/kea-dhcp4/control -> /etc/kea/certs/control
+#   ./certs/kea-dhcp4/ha      -> /etc/kea/certs/ha
 #
-# Required filenames (see entrypoint + config/examples/kea-dhcp4-ha.json):
+# Compose defaults (dhcp-ddns — control only):
+#   ./certs/kea-dhcp-ddns/control -> /etc/kea/certs/control
 #
-#   ca.pem   <- pki/Thor_CA.pem
+# Each tree needs:
+#
+#   ca.pem   <- pki/Thor_CA.pem  (or a dedicated CA per role if you split CAs)
 #   cert.pem <- pki/<host>/<host>.pem
 #   key.pem  <- pki/<host>/<host>.key
 #
-# Keep JSON under *_CONFIG_DIR and PEMs under *_CERT_DIR so keys stay out of
-# the config tree. Never commit private keys.
+# Example kea-dhcp4-ha.json paths:
+#   control socket -> /etc/kea/certs/control/{ca,cert,key}.pem  (port 8001)
+#   HA hook        -> /etc/kea/certs/ha/{ca,cert,key}.pem       (peer URLs :8000)
+#
+# You can point CONTROL and HA env dirs at the same host path if you want one
+# shared leaf. Never commit private keys.

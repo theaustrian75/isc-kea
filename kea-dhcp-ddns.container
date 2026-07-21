@@ -20,8 +20,8 @@ Environment=KEA_HEALTHCHECK_URL=https://127.0.0.1:8002/
 Environment=KEA_HEALTHCHECK_INSECURE=true
 Network=host
 Volume=/srv/kea/dhcp-ddns:/etc/kea:ro,Z
-# TLS material: ca.pem, cert.pem, key.pem (from pki/; never bake into the image)
-Volume=/srv/kea/dhcp-ddns-certs:/etc/kea/certs:ro,Z
+# Control-channel TLS (port 8002): ca.pem, cert.pem, key.pem
+Volume=/srv/kea/dhcp-ddns-certs-control:/etc/kea/certs/control:ro,Z
 Tmpfs=/run/kea:rw,size=16m,uid=100,gid=101,mode=0750
 Tmpfs=/tmp:rw,size=16m,mode=1777
 ReadOnly=true
