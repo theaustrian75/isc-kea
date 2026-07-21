@@ -16,6 +16,9 @@ Group=0
 Environment=KEA_UID=100
 Environment=KEA_GID=101
 Environment=TZ=America/New_York
+# status-get against the HTTPS control socket (match kea-dhcp4.json)
+Environment=KEA_HEALTHCHECK_URL=https://127.0.0.1:8001/
+Environment=KEA_HEALTHCHECK_INSECURE=true
 # Host networking is typical for DHCP servers.
 Network=host
 Volume=/srv/kea/dhcp4:/etc/kea:ro,Z

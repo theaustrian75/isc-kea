@@ -16,6 +16,7 @@ ENV KEA_ROLE=kea-dhcp-ddns \
 
 RUN apk add --no-cache \
         kea-dhcp-ddns \
+        curl \
         tzdata \
         util-linux \
     && apk add --no-cache --virtual .account-tools shadow \

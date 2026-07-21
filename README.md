@@ -21,6 +21,8 @@ Build args / runtime env (both images):
 | `KEA_GID` | `101` | Numeric GID after privilege drop |
 | `TZ` | `UTC` | IANA timezone |
 | `SKIP_CONFIG_TEST` | `false` | Skip `kea-*-t` before start |
+| `KEA_HEALTHCHECK_URL` | `http://127.0.0.1:8001/` or `:8002/` | Control-channel URL for `status-get` |
+| `KEA_HEALTHCHECK_INSECURE` | `true` | Pass `curl -k` for lab HTTPS certs |
 
 ## Build & test
 
