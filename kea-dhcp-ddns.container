@@ -16,6 +16,8 @@ Environment=KEA_GID=101
 Environment=TZ=America/New_York
 Network=host
 Volume=/srv/kea/dhcp-ddns:/etc/kea:ro,Z
+# TLS material: ca.pem, cert.pem, key.pem (from pki/; never bake into the image)
+Volume=/srv/kea/dhcp-ddns-certs:/etc/kea/certs:ro,Z
 Tmpfs=/run/kea:rw,size=16m,uid=100,gid=101,mode=0750
 Tmpfs=/tmp:rw,size=16m,mode=1777
 ReadOnly=true

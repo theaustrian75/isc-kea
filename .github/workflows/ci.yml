@@ -64,6 +64,12 @@ jobs:
               and .target == "/etc/kea"
               and .read_only == true
             )
+            and any(
+              .services["kea-dhcp4"].volumes[];
+              .source == "/tmp/kea-dhcp4-cert-test"
+              and .target == "/etc/kea/certs"
+              and .read_only == true
+            )
             and .services["kea-dhcp-ddns"].container_name == "kea-dhcp-ddns-env-test"
             and .services["kea-dhcp-ddns"].image == "isc-kea/kea-dhcp-ddns:test"
             and .services["kea-dhcp-ddns"].environment.KEA_UID == "12345"
@@ -75,6 +81,12 @@ jobs:
               .services["kea-dhcp-ddns"].volumes[];
               .source == "/tmp/kea-ddns-config-test"
               and .target == "/etc/kea"
+              and .read_only == true
+            )
+            and any(
+              .services["kea-dhcp-ddns"].volumes[];
+              .source == "/tmp/kea-ddns-cert-test"
+              and .target == "/etc/kea/certs"
               and .read_only == true
             )
           ' /tmp/compose-config.json

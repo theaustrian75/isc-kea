@@ -40,9 +40,12 @@ CI mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-lda
 
 ```bash
 cp .env.example .env
-# put kea-*.json (+ certs) under the configured config dirs
+# kea-*.json  -> *_CONFIG_DIR (default ./config/kea-dhcp4, ./config/kea-dhcp-ddns)
+# ca/cert/key -> *_CERT_DIR   (default ./certs/kea-dhcp4, ./certs/kea-dhcp-ddns)
 docker compose up -d
 ```
+
+Certs mount at `/etc/kea/certs` (`ca.pem`, `cert.pem`, `key.pem`). See `config/examples/certs/README.md`.
 
 Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
 
@@ -60,5 +63,5 @@ Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 
 ## Runtime volumes
 
-**kea-dhcp4:** `/etc/kea`, `/var/lib/kea`, `/run/kea`  
-**kea-dhcp-ddns:** `/etc/kea`, `/run/kea`
+**kea-dhcp4:** `/etc/kea`, `/etc/kea/certs`, `/var/lib/kea`, `/run/kea`  
+**kea-dhcp-ddns:** `/etc/kea`, `/etc/kea/certs`, `/run/kea`

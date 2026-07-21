@@ -35,6 +35,8 @@ services:
       - NET_RAW
     volumes:
       - ${KEA_DHCP4_CONFIG_DIR:-./config/kea-dhcp4}:/etc/kea:ro
+      # Overlay TLS material expected by HA configs (ca.pem / cert.pem / key.pem).
+      - ${KEA_DHCP4_CERT_DIR:-./certs/kea-dhcp4}:/etc/kea/certs:ro
       - kea-dhcp4-data:/var/lib/kea
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
@@ -68,6 +70,7 @@ services:
       - DAC_OVERRIDE
     volumes:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
+      - ${KEA_DDNS_CERT_DIR:-./certs/kea-dhcp-ddns}:/etc/kea/certs:ro
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
       - /tmp:rw,mode=1777,size=16m

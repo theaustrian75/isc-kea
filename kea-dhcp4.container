@@ -19,6 +19,8 @@ Environment=TZ=America/New_York
 # Host networking is typical for DHCP servers.
 Network=host
 Volume=/srv/kea/dhcp4:/etc/kea:ro,Z
+# TLS material: ca.pem, cert.pem, key.pem (from pki/; never bake into the image)
+Volume=/srv/kea/dhcp4-certs:/etc/kea/certs:ro,Z
 Volume=kea-dhcp4-data.volume:/var/lib/kea
 Tmpfs=/run/kea:rw,size=16m,uid=100,gid=101,mode=0750
 Tmpfs=/tmp:rw,size=16m,mode=1777

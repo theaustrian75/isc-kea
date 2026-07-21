@@ -30,11 +30,14 @@ pki/**/*.csr
 .env.*
 !.env.example
 
-# Runtime config bind mounts (site kea JSON + certs) — keep examples tracked
+# Runtime config bind mounts (site kea JSON) — keep examples tracked
 /config/kea-dhcp4/
 /config/kea-dhcp-ddns/
 !/config/examples/
 !/config/examples/**
+
+# Runtime TLS bind mounts (never commit private keys)
+/certs/
 
 # Build artifacts
 *.tar
