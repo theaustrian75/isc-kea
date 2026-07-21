@@ -4,10 +4,20 @@
       "interfaces": [ "eth0" ],
       "dhcp-socket-type": "raw"
     },
-    "control-socket": {
-      "socket-type": "unix",
-      "socket-name": "/run/kea/kea4-ctrl-socket"
-    },
+    "control-sockets": [
+      {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea4-ctrl-socket"
+      },
+      {
+        "socket-type": "https",
+        "socket-address": "0.0.0.0",
+        "socket-port": 8001,
+        "trust-anchor": "/etc/kea/certs/ca.pem",
+        "cert-file": "/etc/kea/certs/cert.pem",
+        "key-file": "/etc/kea/certs/key.pem"
+      }
+    ],
     "lease-database": {
       "type": "memfile",
       "persist": true,

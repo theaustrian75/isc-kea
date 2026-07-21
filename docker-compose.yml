@@ -21,6 +21,9 @@ services:
       KEA_UID: ${KEA_UID:-100}
       KEA_GID: ${KEA_GID:-101}
       TZ: ${TZ:-UTC}
+      # status-get over the HTTP(S) control channel (see healthcheck.sh)
+      KEA_HEALTHCHECK_URL: ${KEA_DHCP4_HEALTHCHECK_URL:-http://127.0.0.1:8001/}
+      KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -35,6 +38,8 @@ services:
       - NET_RAW
     volumes:
       - ${KEA_DHCP4_CONFIG_DIR:-./config/kea-dhcp4}:/etc/kea:ro
+      # Overlay TLS material expected by HA configs (ca.pem / cert.pem / key.pem).
+      - ${KEA_DHCP4_CERT_DIR:-./certs/kea-dhcp4}:/etc/kea/certs:ro
       - kea-dhcp4-data:/var/lib/kea
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
@@ -55,19 +60,23 @@ services:
       KEA_UID: ${KEA_UID:-100}
       KEA_GID: ${KEA_GID:-101}
       TZ: ${TZ:-UTC}
+      # Example (tyr): https://10.255.255.6:8002/
+      KEA_HEALTHCHECK_URL: ${KEA_DDNS_HEALTHCHECK_URL:-http://127.0.0.1:8002/}
+      KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
     read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     cap_add:
+      # No NET_BIND_SERVICE: DDNS listens on 53001 (>1024).
       - CHOWN
       - SETUID
       - SETGID
       - DAC_OVERRIDE
-      - NET_BIND_SERVICE
     volumes:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
+      - ${KEA_DDNS_CERT_DIR:-./certs/kea-dhcp-ddns}:/etc/kea/certs:ro
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
       - /tmp:rw,mode=1777,size=16m

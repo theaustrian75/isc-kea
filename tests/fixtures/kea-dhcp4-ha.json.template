@@ -4,10 +4,17 @@
       "interfaces": [ "lo" ],
       "dhcp-socket-type": "udp"
     },
-    "control-socket": {
-      "socket-type": "unix",
-      "socket-name": "/run/kea/kea4-ctrl-socket"
-    },
+    "control-sockets": [
+      {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea4-ctrl-socket"
+      },
+      {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "socket-port": 8001
+      }
+    ],
     "lease-database": {
       "type": "memfile",
       "persist": false,

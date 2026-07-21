@@ -21,6 +21,8 @@ Build args / runtime env (both images):
 | `KEA_GID` | `101` | Numeric GID after privilege drop |
 | `TZ` | `UTC` | IANA timezone |
 | `SKIP_CONFIG_TEST` | `false` | Skip `kea-*-t` before start |
+| `KEA_HEALTHCHECK_URL` | `http://127.0.0.1:8001/` or `:8002/` | Control-channel URL for `status-get` |
+| `KEA_HEALTHCHECK_INSECURE` | `true` | Pass `curl -k` for lab HTTPS certs |
 
 ## Build & test
 
@@ -40,9 +42,12 @@ CI mirrors [jumpcloud-ldap-proxy](https://github.com/theaustrian75/jumpcloud-lda
 
 ```bash
 cp .env.example .env
-# put kea-*.json (+ certs) under the configured config dirs
+# kea-*.json  -> *_CONFIG_DIR (default ./config/kea-dhcp4, ./config/kea-dhcp-ddns)
+# ca/cert/key -> *_CERT_DIR   (default ./certs/kea-dhcp4, ./certs/kea-dhcp-ddns)
 docker compose up -d
 ```
+
+Certs mount at `/etc/kea/certs` (`ca.pem`, `cert.pem`, `key.pem`). See `config/examples/certs/README.md`.
 
 Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
 
@@ -58,15 +63,7 @@ Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 ./scripts/check-cert-expiry.sh   # fails if a leaf expires within 30 days
 ```
 
-## Private registry (opt-in)
-
-GHCR is the default publish path. To push to `registry.klausk.xyz`:
-
-```bash
-PUSH_PRIVATE_REGISTRY=1 ./build-latest.sh
-```
-
 ## Runtime volumes
 
-**kea-dhcp4:** `/etc/kea`, `/var/lib/kea`, `/run/kea`  
-**kea-dhcp-ddns:** `/etc/kea`, `/run/kea`
+**kea-dhcp4:** `/etc/kea`, `/etc/kea/certs`, `/var/lib/kea`, `/run/kea`  
+**kea-dhcp-ddns:** `/etc/kea`, `/etc/kea/certs`, `/run/kea`

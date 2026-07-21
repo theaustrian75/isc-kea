@@ -2,10 +2,20 @@
   "DhcpDdns": {
     "ip-address": "127.0.0.1",
     "port": 53001,
-    "control-socket": {
-      "socket-type": "unix",
-      "socket-name": "/run/kea/kea-ddns-ctrl-socket"
-    },
+    "control-sockets": [
+      {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea-ddns-ctrl-socket"
+      },
+      {
+        "socket-type": "https",
+        "socket-address": "0.0.0.0",
+        "socket-port": 8002,
+        "trust-anchor": "/etc/kea/certs/ca.pem",
+        "cert-file": "/etc/kea/certs/cert.pem",
+        "key-file": "/etc/kea/certs/key.pem"
+      }
+    ],
     "forward-ddns": {
       "ddns-domains": []
     },

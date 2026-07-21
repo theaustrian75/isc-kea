@@ -16,6 +16,7 @@ ENV KEA_ROLE=kea-dhcp-ddns \
 
 RUN apk add --no-cache \
         kea-dhcp-ddns \
+        curl \
         tzdata \
         util-linux \
     && apk add --no-cache --virtual .account-tools shadow \
@@ -38,7 +39,7 @@ VOLUME [ "/etc/kea", "/run/kea" ]
 
 EXPOSE 53001/udp
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD ["/usr/local/bin/healthcheck.sh"]
 
 # Start as root so the entrypoint can chown runtime dirs, then drop via setpriv.
