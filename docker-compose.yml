@@ -24,12 +24,6 @@ services:
       # status-get over the HTTP(S) control channel (see healthcheck.sh)
       KEA_HEALTHCHECK_URL: ${KEA_DHCP4_HEALTHCHECK_URL:-http://127.0.0.1:8001/}
       KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     read_only: true
     security_opt:
       - no-new-privileges:true
@@ -69,12 +63,6 @@ services:
       # Example (tyr): https://10.255.255.6:8002/
       KEA_HEALTHCHECK_URL: ${KEA_DDNS_HEALTHCHECK_URL:-http://127.0.0.1:8002/}
       KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     read_only: true
     security_opt:
       - no-new-privileges:true
