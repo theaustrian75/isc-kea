@@ -113,7 +113,6 @@ COMMON_RUN="--read-only
   --cap-add SETUID
   --cap-add SETGID
   --cap-add DAC_OVERRIDE
-  --cap-add NET_BIND_SERVICE
   --pids-limit 128
   --memory 256m
   -e KEA_UID=$RUNTIME_UID
@@ -128,11 +127,13 @@ case "$ROLE" in
   kea-dhcp4)
     docker run -d --name "$CONTAINER" \
       $COMMON_RUN \
+      --cap-add NET_BIND_SERVICE \
       --cap-add NET_RAW \
       --tmpfs /var/lib/kea:rw,mode=0750,size=32m,uid="$RUNTIME_UID",gid="$RUNTIME_GID" \
       "$IMAGE" >/dev/null
     ;;
   kea-dhcp-ddns)
+    # No NET_BIND_SERVICE: DDNS listens on 53001 (>1024).
     docker run -d --name "$CONTAINER" \
       $COMMON_RUN \
       "$IMAGE" >/dev/null

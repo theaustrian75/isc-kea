@@ -58,14 +58,6 @@ Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 ./scripts/check-cert-expiry.sh   # fails if a leaf expires within 30 days
 ```
 
-## Private registry (opt-in)
-
-GHCR is the default publish path. To push to `registry.klausk.xyz`:
-
-```bash
-PUSH_PRIVATE_REGISTRY=1 ./build-latest.sh
-```
-
 ## Runtime volumes
 
 **kea-dhcp4:** `/etc/kea`, `/var/lib/kea`, `/run/kea`  

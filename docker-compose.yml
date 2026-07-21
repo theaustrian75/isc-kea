@@ -61,11 +61,11 @@ services:
     cap_drop:
       - ALL
     cap_add:
+      # No NET_BIND_SERVICE: DDNS listens on 53001 (>1024).
       - CHOWN
       - SETUID
       - SETGID
       - DAC_OVERRIDE
-      - NET_BIND_SERVICE
     volumes:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
     tmpfs:
