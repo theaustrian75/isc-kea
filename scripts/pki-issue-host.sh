@@ -44,6 +44,6 @@ echo "  $HOSTDIR/${HOST}.pem"
 openssl x509 -in "$HOSTDIR/${HOST}.pem" -noout -subject -issuer -dates -ext subjectAltName
 echo
 echo "Mount at runtime (do not bake into the image), e.g.:"
-echo "  ${HOST}.pem  -> /etc/kea/certs/${HOST}.pem"
-echo "  ${HOST}.key  -> /etc/kea/certs/${HOST}.key"
-echo "  Thor_CA.pem  -> /etc/kea/certs/ca.pem"
+echo "  control: ${HOST}.pem/key + Thor_CA.pem -> /etc/kea/certs/control/{cert,key,ca}.pem"
+echo "  HA:      ${HOST}.pem/key + Thor_CA.pem -> /etc/kea/certs/ha/{cert,key,ca}.pem"
+echo "  (or point both trees at the same files if you share one leaf)"

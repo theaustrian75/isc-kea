@@ -38,8 +38,9 @@ services:
       - NET_RAW
     volumes:
       - ${KEA_DHCP4_CONFIG_DIR:-./config/kea-dhcp4}:/etc/kea:ro
-      # Overlay TLS material expected by HA configs (ca.pem / cert.pem / key.pem).
-      - ${KEA_DHCP4_CERT_DIR:-./certs/kea-dhcp4}:/etc/kea/certs:ro
+      # Separate TLS trees: control API (port 8001) vs HA peers (port 8000).
+      - ${KEA_DHCP4_CONTROL_CERT_DIR:-./certs/kea-dhcp4/control}:/etc/kea/certs/control:ro
+      - ${KEA_DHCP4_HA_CERT_DIR:-./certs/kea-dhcp4/ha}:/etc/kea/certs/ha:ro
       - kea-dhcp4-data:/var/lib/kea
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
@@ -76,7 +77,7 @@ services:
       - DAC_OVERRIDE
     volumes:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
-      - ${KEA_DDNS_CERT_DIR:-./certs/kea-dhcp-ddns}:/etc/kea/certs:ro
+      - ${KEA_DDNS_CONTROL_CERT_DIR:-./certs/kea-dhcp-ddns/control}:/etc/kea/certs/control:ro
     tmpfs:
       - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
       - /tmp:rw,mode=1777,size=16m

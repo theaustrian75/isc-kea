@@ -75,18 +75,23 @@ if [ ! -r "$CONFIG" ]; then
   exit 1
 fi
 
-# Optional TLS material: if the paths appear in config as /etc/kea/certs/*, require them.
-if grep -Eq '/etc/kea/certs/' "$CONFIG" 2>/dev/null; then
-  for tls_file in /etc/kea/certs/ca.pem /etc/kea/certs/cert.pem /etc/kea/certs/key.pem; do
+# Optional TLS material: require every /etc/kea/certs/... path referenced in config.
+# Allows separate control vs HA cert trees (e.g. certs/control and certs/ha).
+tls_paths=$(grep -Eo '/etc/kea/certs/[^"[:space:]]+' "$CONFIG" 2>/dev/null | sort -u || true)
+if [ -n "$tls_paths" ]; then
+  while IFS= read -r tls_file; do
+    [ -n "$tls_file" ] || continue
     if [ ! -f "$tls_file" ]; then
-      echo "Required TLS file is missing: $tls_file (config references /etc/kea/certs/)" >&2
+      echo "Required TLS file is missing: $tls_file (referenced in $CONFIG)" >&2
       exit 1
     fi
     if [ ! -r "$tls_file" ]; then
       echo "Required TLS file is not readable by uid $(id -u): $tls_file" >&2
       exit 1
     fi
-  done
+  done <<EOF
+$tls_paths
+EOF
 fi
 
 mkdir -p /run/kea
