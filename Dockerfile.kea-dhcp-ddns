@@ -1,0 +1,46 @@
+# Alpine-based ISC Kea DHCP DDNS (multi-arch: amd64/arm64)
+FROM alpine:3.24.1
+
+LABEL org.opencontainers.image.authors="admin@example.com" \
+      org.opencontainers.image.title="kea-dhcp-ddns" \
+      org.opencontainers.image.description="ISC Kea DHCP DDNS daemon"
+
+ARG KEA_UID=100
+ARG KEA_GID=101
+
+ENV KEA_ROLE=kea-dhcp-ddns \
+    KEA_UID="${KEA_UID}" \
+    KEA_GID="${KEA_GID}" \
+    TZ=UTC \
+    SKIP_CONFIG_TEST=false
+
+RUN apk add --no-cache \
+        kea-dhcp-ddns \
+        curl \
+        tzdata \
+        util-linux \
+    && apk add --no-cache --virtual .account-tools shadow \
+    && if ! awk -F: -v gid="${KEA_GID}" '$3 == gid { found = 1 } END { exit !found }' /etc/group; then \
+         groupmod -g "${KEA_GID}" kea; \
+       fi \
+    && usermod -u "${KEA_UID}" -g "${KEA_GID}" kea \
+    && test "$(id -u kea)" = "${KEA_UID}" \
+    && test "$(id -g kea)" = "${KEA_GID}" \
+    && apk del .account-tools \
+    && mkdir -p /etc/kea /run/kea \
+    && chown -R "${KEA_UID}:${KEA_GID}" /run/kea \
+    && chmod 0750 /run/kea
+
+COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chmod=0755 healthcheck.sh /usr/local/bin/healthcheck.sh
+
+# TLS certs and kea-*.json are mounted here at runtime — never bake secrets into the image
+VOLUME [ "/etc/kea", "/run/kea" ]
+
+EXPOSE 53001/udp
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["/usr/local/bin/healthcheck.sh"]
+
+# Start as root so the entrypoint can chown runtime dirs, then drop via setpriv.
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

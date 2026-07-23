@@ -1,0 +1,41 @@
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [ "lo" ],
+      "dhcp-socket-type": "udp"
+    },
+    "control-sockets": [
+      {
+        "socket-type": "unix",
+        "socket-name": "/run/kea/kea4-ctrl-socket"
+      },
+      {
+        "socket-type": "http",
+        "socket-address": "127.0.0.1",
+        "socket-port": 8001
+      }
+    ],
+    "lease-database": {
+      "type": "memfile",
+      "persist": false,
+      "name": "/var/lib/kea/dhcp4.leases"
+    },
+    "expired-leases-processing": {
+      "reclaim-timer-wait-time": 10
+    },
+    "subnet4": [
+      {
+        "id": 1,
+        "subnet": "127.0.0.0/8",
+        "pools": [ { "pool": "127.0.0.10 - 127.0.0.20" } ]
+      }
+    ],
+    "loggers": [
+      {
+        "name": "kea-dhcp4",
+        "output_options": [ { "output": "stdout" } ],
+        "severity": "INFO"
+      }
+    ]
+  }
+}
