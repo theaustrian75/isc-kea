@@ -56,7 +56,13 @@ Example configs (including HA + TLS paths): `config/examples/`.
 
 ## PKI
 
-Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
+Kea HA peer transport uses **mutual TLS**: each node presents a client certificate and validates the peer against a private trust anchor. Public CAs such as **Let's Encrypt** and **ZeroSSL** are not suitable for that path:
+
+- They issue **server** certificates for publicly validated hostnames, not internal mTLS identities (private DNS, RFC1918 / documentation IPs, OOB management names).
+- They do not hand you a CA you control as `trust-anchor` for peer verification the way Kea HA expects.
+- ACME challenges and short lifetimes are a poor fit for closed management networks that should not depend on the public internet to renew HA links.
+
+Use the private **Example Internal CA** under `pki/` instead (details in [docs/PKI.md](docs/PKI.md)). Private keys are gitignored.
 
 ```bash
 ./scripts/pki-init-ca.sh
