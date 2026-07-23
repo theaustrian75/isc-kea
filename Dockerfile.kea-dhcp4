@@ -1,7 +1,7 @@
 # Alpine-based ISC Kea DHCPv4 (multi-arch: amd64/arm64)
 FROM alpine:3.24.1
 
-LABEL org.opencontainers.image.authors="admin@klausk.xyz" \
+LABEL org.opencontainers.image.authors="admin@example.com" \
       org.opencontainers.image.title="kea-dhcp4" \
       org.opencontainers.image.description="ISC Kea DHCPv4 with HA and lease-cmds hooks"
 

@@ -10,6 +10,11 @@ Mount separate trees for the HTTPS **control** socket and **HA** peers:
 
 Each tree needs `ca.pem`, `cert.pem`, and `key.pem` (copy from your PKI; never commit private keys).
 
+Typical mapping from `pki/`:
+
+- `ca.pem` ← `Example_CA.pem`
+- `cert.pem` / `key.pem` ← `pki/<host>/<host>.pem` and `.key`
+
 In `kea-dhcp4-ha.json`:
 
 - control socket → `/etc/kea/certs/control/*` (port **8001**)

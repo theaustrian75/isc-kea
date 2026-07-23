@@ -1,13 +1,13 @@
 # PKI for Kea TLS
 
-This tree is a small OpenSSL “Thor Internal CA” used for Kea mutual TLS (HA peer auth, control sockets, DDNS as configured). Leaf certs are issued for ~**825 days** (see `default_days` in `openssl.cnf`).
+This tree is a small OpenSSL “Example Internal CA” used for Kea mutual TLS (HA peer auth, control sockets, DDNS as configured). Leaf certs are issued for ~**825 days** (see `default_days` in `openssl.cnf`).
 
 ## What belongs in git vs what does not
 
 | Path | In git? | Why |
 |---|---|---|
 | `pki/**/openssl.cnf` | yes | Non-secret templates (CN/SAN) |
-| `Thor_CA.pem` | optional | Public trust anchor — safe to distribute, still treat as internal |
+| `Example_CA.pem` | optional | Public trust anchor — safe to distribute, still treat as internal |
 | `*.key`, leaf `*.pem`, `index.txt`, `serial`, `certs/` | **no** | Private keys + CA database |
 
 `.gitignore` already excludes keys and CA state. If this repo was ever pushed with keys present, **rotate the CA and all leaf certs**.
@@ -16,9 +16,9 @@ This tree is a small OpenSSL “Thor Internal CA” used for Kea mutual TLS (HA 
 
 ### 1. Keep the CA offline (preferred)
 
-- Generate `Thor_CA.key` on an air-gapped or admin-only host (or a USB stick / HSM).
+- Generate `Example_CA.key` on an air-gapped or admin-only host (or a USB stick / HSM).
 - Store the CA key in a secret manager (Vault, 1Password vault, age-encrypted file on encrypted disk) — **not** next to the Kea hosts if you can avoid it.
-- Only the **CA cert** (`Thor_CA.pem`) and each host’s **own** key+cert go onto `odin` / `tyr`.
+- Only the **CA cert** (`Example_CA.pem`) and each host’s **own** key+cert go onto `dhcp1` / `dhcp2`.
 - Issue / renew leaves on the CA host, then copy artifacts out.
 
 ### 2. Mount certs at runtime — never bake into images
@@ -41,7 +41,7 @@ the control socket and in the HA hook). Compose/Quadlet mount host dirs onto
 
 ### 3. Renewal (825-day leaves)
 
-`renew_client_certs_every_825_days.txt` is a reminder: calendar that date (~Jun 2028 for the current odin/tyr leaves).
+`renew_client_certs_every_825_days.txt` is a reminder: calendar renewals against your leaf `notAfter` dates.
 
 Practical approach:
 
@@ -59,32 +59,32 @@ Use **SOPS + age** (or git-crypt) so only ciphertext is committed:
 ```bash
 # example shape — not committed as plaintext
 pki-secrets/
-  Thor_CA.key.age
-  odin/odin.key.age
+  Example_CA.key.age
+  dhcp1/dhcp1.key.age
 ```
 
 Decrypt only on the CA/admin machine or via CI with a protected environment secret. Prefer Vault/Podman secrets over encrypted-git for the CA key.
 
 ### 5. What not to do
 
-- Do **not** `COPY` keys into Dockerfiles or bake them into layers.
-- Do **not** commit `Thor_CA.key`.
-- Do **not** share one leaf key across odin and tyr — each peer needs its own identity for mTLS.
+- Do **not** `COPY` keys into Dockerfiles or bake them into images.
+- Do **not** commit `Example_CA.key`.
+- Do **not** share one leaf key across dhcp1 and dhcp2 — each peer needs its own identity for mTLS.
 - Do **not** use the public web PKI for internal HA; keep this private CA.
 
 ## Scripts
 
 ```bash
 ./scripts/pki-init-ca.sh           # create CA (refuses overwrite)
-./scripts/pki-issue-host.sh odin   # key + CSR + sign → pki/odin/
-./scripts/pki-issue-host.sh tyr
+./scripts/pki-issue-host.sh dhcp1  # key + CSR + sign → pki/dhcp1/
+./scripts/pki-issue-host.sh dhcp2
 ```
 
 Host SANs/IPs live in `pki/<host>/openssl.cnf` — edit those when addressing changes.
 
-## Current hosts (from configs)
+## Example hosts (from configs)
 
 | Host | CN / DNS | IP |
 |---|---|---|
-| odin | `odin.oob.klausk.xyz` | `10.255.255.4` |
-| tyr  | `tyr.oob.klausk.xyz`  | `10.255.255.6` |
+| dhcp1 | `dhcp1.example.com` | `192.0.2.10` |
+| dhcp2 | `dhcp2.example.com` | `192.0.2.11` |

@@ -37,14 +37,14 @@
               "max-unacked-clients": 0,
               "peers": [
                 {
-                  "name": "odin",
-                  "url": "http://@@ODIN_IP@@:8000/",
+                  "name": "dhcp1",
+                  "url": "http://@@DHCP1_IP@@:8000/",
                   "role": "primary",
                   "auto-failover": true
                 },
                 {
-                  "name": "tyr",
-                  "url": "http://@@TYR_IP@@:8000/",
+                  "name": "dhcp2",
+                  "url": "http://@@DHCP2_IP@@:8000/",
                   "role": "standby",
                   "auto-failover": true
                 }

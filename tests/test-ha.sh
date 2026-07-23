@@ -8,10 +8,10 @@ IMAGE="${1:?Usage: tests/test-ha.sh IMAGE}"
 ROOT=$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)
 TMP=$(mktemp -d)
 NET="kea-ha-test-$$"
-PRIMARY="kea-odin-$$"
-STANDBY="kea-tyr-$$"
-ODIN_IP=172.30.97.10
-TYR_IP=172.30.97.11
+PRIMARY="kea-dhcp1-$$"
+STANDBY="kea-dhcp2-$$"
+DHCP1_IP=172.30.97.10
+DHCP2_IP=172.30.97.11
 
 # Invoked through trap.
 # shellcheck disable=SC2317
@@ -25,17 +25,17 @@ trap cleanup EXIT INT TERM
 render() {
   peer=$1
   sed -e "s/@@PEER@@/${peer}/g" \
-      -e "s/@@ODIN_IP@@/${ODIN_IP}/g" \
-      -e "s/@@TYR_IP@@/${TYR_IP}/g" \
+      -e "s/@@DHCP1_IP@@/${DHCP1_IP}/g" \
+      -e "s/@@DHCP2_IP@@/${DHCP2_IP}/g" \
       "$ROOT/tests/fixtures/kea-dhcp4-ha.json.template"
 }
 
-mkdir -p "$TMP/odin" "$TMP/tyr"
-render odin > "$TMP/odin/kea-dhcp4.json"
-render tyr > "$TMP/tyr/kea-dhcp4.json"
+mkdir -p "$TMP/dhcp1" "$TMP/dhcp2"
+render dhcp1 > "$TMP/dhcp1/kea-dhcp4.json"
+render dhcp2 > "$TMP/dhcp2/kea-dhcp4.json"
 
 # Config syntax + HA hook load for each peer identity.
-for peer in odin tyr; do
+for peer in dhcp1 dhcp2; do
   docker run --rm \
     -v "$TMP/$peer:/etc/kea:ro" \
     --tmpfs /run/kea:rw,mode=0750,size=16m \
@@ -66,8 +66,8 @@ run_peer() {
     "$IMAGE" >/dev/null
 }
 
-run_peer "$PRIMARY" odin "$ODIN_IP"
-run_peer "$STANDBY" tyr "$TYR_IP"
+run_peer "$PRIMARY" dhcp1 "$DHCP1_IP"
+run_peer "$STANDBY" dhcp2 "$DHCP2_IP"
 
 wait_healthy() {
   container=$1

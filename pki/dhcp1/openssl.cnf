@@ -4,7 +4,7 @@ distinguished_name = dn
 req_extensions = v3_kea
 
 [ dn ]
-CN = odin.oob.klausk.xyz
+CN = dhcp1.example.com
 
 [ v3_kea ]
 basicConstraints = CA:false
@@ -13,5 +13,5 @@ extendedKeyUsage = serverAuth, clientAuth
 subjectAltName = @alt_names
 
 [ alt_names ]
-DNS.1 = odin.oob.klausk.xyz
-IP.1  = 10.255.255.4
+DNS.1 = dhcp1.example.com
+IP.1  = 192.0.2.10

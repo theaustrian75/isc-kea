@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create (or refresh layout for) the Thor internal CA under ./pki
+# Create (or refresh layout for) the Example Internal CA under ./pki
 # Does NOT overwrite an existing CA key/cert.
 set -euo pipefail
 
@@ -14,20 +14,20 @@ touch index.txt
 [[ -f serial ]] || echo '1000' > serial
 [[ -f index.txt.attr ]] || echo 'unique_subject = no' > index.txt.attr
 
-if [[ -f Thor_CA.key || -f Thor_CA.pem ]]; then
-  echo "CA already exists (Thor_CA.key / Thor_CA.pem). Refusing to overwrite."
+if [[ -f Example_CA.key || -f Example_CA.pem ]]; then
+  echo "CA already exists (Example_CA.key / Example_CA.pem). Refusing to overwrite."
   echo "Remove them manually if you intend to start a new CA."
   exit 1
 fi
 
 openssl req -new -x509 -days 3650 -config openssl.cnf \
-  -keyout Thor_CA.key -out Thor_CA.pem \
+  -keyout Example_CA.key -out Example_CA.pem \
   -extensions v3_ca
 
-chmod 600 Thor_CA.key
-chmod 644 Thor_CA.pem
+chmod 600 Example_CA.key
+chmod 644 Example_CA.pem
 
 echo "Created:"
-echo "  $PKI/Thor_CA.key  (keep offline / in a secret store)"
-echo "  $PKI/Thor_CA.pem  (distribute to Kea nodes as trust anchor)"
-openssl x509 -in Thor_CA.pem -noout -subject -dates
+echo "  $PKI/Example_CA.key  (keep offline / in a secret store)"
+echo "  $PKI/Example_CA.pem  (distribute to Kea nodes as trust anchor)"
+openssl x509 -in Example_CA.pem -noout -subject -dates

@@ -60,7 +60,7 @@ Private keys are gitignored. See [docs/PKI.md](docs/PKI.md).
 
 ```bash
 ./scripts/pki-init-ca.sh
-./scripts/pki-issue-host.sh odin
+./scripts/pki-issue-host.sh dhcp1
 ./scripts/check-cert-expiry.sh   # fails if a leaf expires within 30 days
 ```
 

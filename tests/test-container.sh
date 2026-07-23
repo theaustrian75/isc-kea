@@ -65,7 +65,7 @@ docker image inspect "$IMAGE" |
   jq -e '.[0].Config.Healthcheck.Test == ["CMD", "/usr/local/bin/healthcheck.sh"]' >/dev/null
 
 if docker run --rm --entrypoint /bin/sh "$IMAGE" -c \
-  'find / \( -name "*.key" -o -name "Thor_CA*" \) 2>/dev/null | grep -q .'; then
+  'find / \( -name "*.key" -o -name "Example_CA*" \) 2>/dev/null | grep -q .'; then
   echo "ERROR: private key / CA material found inside image" >&2
   exit 1
 fi

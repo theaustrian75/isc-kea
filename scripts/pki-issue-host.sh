@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Issue a host cert for Kea TLS (HA / control-agent / DDNS) under ./pki/<host>/
 # Usage: ./scripts/pki-issue-host.sh <host-dir>
-# Example: ./scripts/pki-issue-host.sh odin
+# Example: ./scripts/pki-issue-host.sh dhcp1
 set -euo pipefail
 
-HOST="${1:?usage: $0 <host-dir e.g. odin|tyr>}"
+HOST="${1:?usage: $0 <host-dir e.g. dhcp1|dhcp2>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PKI="$ROOT/pki"
 HOSTDIR="$PKI/$HOST"
@@ -13,7 +13,7 @@ if [[ ! -f "$HOSTDIR/openssl.cnf" ]]; then
   echo "Missing $HOSTDIR/openssl.cnf" >&2
   exit 1
 fi
-if [[ ! -f "$PKI/Thor_CA.key" || ! -f "$PKI/Thor_CA.pem" ]]; then
+if [[ ! -f "$PKI/Example_CA.key" || ! -f "$PKI/Example_CA.pem" ]]; then
   echo "CA missing. Run ./scripts/pki-init-ca.sh first." >&2
   exit 1
 fi
@@ -44,6 +44,6 @@ echo "  $HOSTDIR/${HOST}.pem"
 openssl x509 -in "$HOSTDIR/${HOST}.pem" -noout -subject -issuer -dates -ext subjectAltName
 echo
 echo "Mount at runtime (do not bake into the image), e.g.:"
-echo "  control: ${HOST}.pem/key + Thor_CA.pem -> /etc/kea/certs/control/{cert,key,ca}.pem"
-echo "  HA:      ${HOST}.pem/key + Thor_CA.pem -> /etc/kea/certs/ha/{cert,key,ca}.pem"
+echo "  control: ${HOST}.pem/key + Example_CA.pem -> /etc/kea/certs/control/{cert,key,ca}.pem"
+echo "  HA:      ${HOST}.pem/key + Example_CA.pem -> /etc/kea/certs/ha/{cert,key,ca}.pem"
 echo "  (or point both trees at the same files if you share one leaf)"
