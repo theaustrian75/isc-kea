@@ -42,8 +42,9 @@ services:
       - ${KEA_DHCP4_CONTROL_CERT_DIR:-./certs/kea-dhcp4/control}:/etc/kea/certs/control:ro
       - ${KEA_DHCP4_HA_CERT_DIR:-./certs/kea-dhcp4/ha}:/etc/kea/certs/ha:ro
       - kea-dhcp4-data:/var/lib/kea
+    # Compose/Docker mount API rejects tmpfs uid=/gid=; entrypoint chowns with CAP_CHOWN.
     tmpfs:
-      - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
+      - /run/kea:rw,mode=0750,size=16m
       - /tmp:rw,mode=1777,size=16m
     network_mode: host
     restart: unless-stopped
@@ -79,7 +80,7 @@ services:
       - ${KEA_DDNS_CONFIG_DIR:-./config/kea-dhcp-ddns}:/etc/kea:ro
       - ${KEA_DDNS_CONTROL_CERT_DIR:-./certs/kea-dhcp-ddns/control}:/etc/kea/certs/control:ro
     tmpfs:
-      - /run/kea:rw,mode=0750,size=16m,uid=${KEA_UID:-100},gid=${KEA_GID:-101}
+      - /run/kea:rw,mode=0750,size=16m
       - /tmp:rw,mode=1777,size=16m
     network_mode: host
     restart: unless-stopped

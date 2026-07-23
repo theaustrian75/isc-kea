@@ -50,7 +50,7 @@ docker compose up -d
 
 Control and HA can use different leaves (or point both env dirs at the same host path). See `config/examples/certs/README.md`.
 
-Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Keep tmpfs `uid`/`gid` in sync with those env values.
+Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Quadlet `Tmpfs=` may set `uid`/`gid` to match; Compose cannot (Docker rejects those options), so compose relies on entrypoint `chown`.
 
 Example configs (including HA + TLS paths): `config/examples/`.
 

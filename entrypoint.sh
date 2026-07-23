@@ -95,8 +95,8 @@ EOF
 fi
 
 mkdir -p /run/kea
-# Prefer orchestrator tmpfs options (mode=0750,uid=,gid=). chmod/chown on an
-# already-mounted tmpfs often returns EPERM under no-new-privileges.
+# Quadlet/podman can set tmpfs uid=/gid= at mount time; Compose/Docker cannot.
+# Chown here (needs CAP_CHOWN) so the dropped-privilege process can write sockets.
 chmod 0750 /run/kea 2>/dev/null || true
 chown "${KEA_UID}:${KEA_GID}" /run/kea 2>/dev/null || true
 
