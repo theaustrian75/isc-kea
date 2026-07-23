@@ -61,7 +61,7 @@ services:
       KEA_UID: ${KEA_UID:-100}
       KEA_GID: ${KEA_GID:-101}
       TZ: ${TZ:-UTC}
-      # Example (tyr): https://10.255.255.6:8002/
+      # Example: https://dhcp2.example.com:8002/
       KEA_HEALTHCHECK_URL: ${KEA_DDNS_HEALTHCHECK_URL:-http://127.0.0.1:8002/}
       KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
     read_only: true

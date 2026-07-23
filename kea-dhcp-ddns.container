@@ -15,7 +15,7 @@ Environment=KEA_UID=100
 Environment=KEA_GID=101
 Environment=TZ=America/New_York
 # status-get against the HTTPS control socket (match kea-dhcp-ddns.json)
-# Example on tyr: https://10.255.255.6:8002/
+# Example: https://dhcp2.example.com:8002/
 Environment=KEA_HEALTHCHECK_URL=https://127.0.0.1:8002/
 Environment=KEA_HEALTHCHECK_INSECURE=true
 Network=host
