@@ -2,7 +2,7 @@
 
 Alpine 3.24 images for **kea-dhcp4** (HA + lease-cmds) and **kea-dhcp-ddns**.
 
-Config and TLS material are mounted at runtime. The process drops to configurable `KEA_UID`/`KEA_GID` via `setpriv`.
+Config and TLS material are mounted at runtime. The process drops to configurable `KEA_UID`/`KEA_GID` via `setpriv`. For **kea-dhcp4**, `NET_BIND_SERVICE` and `NET_RAW` are raised as ambient capabilities so they survive that drop (required for UDP/67); do **not** enable `no-new-privileges` on dhcp4 or those caps are cleared and bind fails with `Permission denied`.
 
 ## Images
 
@@ -50,7 +50,7 @@ docker compose up -d
 
 Control and HA can use different leaves (or point both env dirs at the same host path). See `config/examples/certs/README.md`.
 
-Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Quadlet `Tmpfs=` may set `uid`/`gid` to match; Compose cannot (Docker rejects those options), so compose relies on entrypoint `chown`.
+Quadlet units: `kea-dhcp4.container`, `kea-dhcp-ddns.container` (set `User=0` so the entrypoint can chown, then drops to `KEA_UID`/`KEA_GID`). Quadlet `Tmpfs=` may set `uid`/`gid` to match; Compose cannot (Docker rejects those options), so compose relies on entrypoint `chown`. DDNS may use `NoNewPrivileges=true`; dhcp4 must not (ambient net caps).
 
 Example configs (including HA + TLS paths): `config/examples/`.
 

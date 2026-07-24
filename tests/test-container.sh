@@ -107,7 +107,6 @@ chmod 750 "$TMP_ROOT/run"
 chmod 644 "$TMP_ROOT/etc/$CONFIG_NAME"
 
 COMMON_RUN="--read-only
-  --security-opt no-new-privileges:true
   --cap-drop ALL
   --cap-add CHOWN
   --cap-add SETUID
@@ -125,6 +124,7 @@ COMMON_RUN="--read-only
 # shellcheck disable=SC2086
 case "$ROLE" in
   kea-dhcp4)
+    # no-new-privileges omitted: ambient NET_* caps after setpriv uid drop.
     docker run -d --name "$CONTAINER" \
       $COMMON_RUN \
       --cap-add NET_BIND_SERVICE \
@@ -136,6 +136,7 @@ case "$ROLE" in
     # No NET_BIND_SERVICE: DDNS listens on 53001 (>1024).
     docker run -d --name "$CONTAINER" \
       $COMMON_RUN \
+      --security-opt no-new-privileges:true \
       "$IMAGE" >/dev/null
     ;;
 esac
