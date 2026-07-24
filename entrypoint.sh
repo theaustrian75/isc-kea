@@ -115,6 +115,18 @@ fi
 
 rm -f "$PID_FILE"
 
-# Drop to the configured identity. Caps (NET_BIND_SERVICE / NET_RAW) stay effective.
-exec setpriv --reuid="$KEA_UID" --regid="$KEA_GID" --clear-groups -- \
-  "$BIN" -c "$CONFIG"
+# Drop root, then exec. After setuid, Linux clears effective caps on exec unless
+# they are ambient. Ambient raises require the process NOT to have no_new_privs
+# (so kea-dhcp4 compose/Quadlet must omit no-new-privileges).
+case "$KEA_ROLE" in
+  kea-dhcp4)
+    exec setpriv --reuid="$KEA_UID" --regid="$KEA_GID" --clear-groups \
+      --inh-caps=-all,+net_bind_service,+net_raw \
+      --ambient-caps=-all,+net_bind_service,+net_raw \
+      -- "$BIN" -c "$CONFIG"
+    ;;
+  *)
+    exec setpriv --reuid="$KEA_UID" --regid="$KEA_GID" --clear-groups -- \
+      "$BIN" -c "$CONFIG"
+    ;;
+esac

@@ -25,8 +25,8 @@ services:
       KEA_HEALTHCHECK_URL: ${KEA_DHCP4_HEALTHCHECK_URL:-http://127.0.0.1:8001/}
       KEA_HEALTHCHECK_INSECURE: ${KEA_HEALTHCHECK_INSECURE:-true}
     read_only: true
-    security_opt:
-      - no-new-privileges:true
+    # Do not set no-new-privileges here: entrypoint raises ambient NET_BIND_SERVICE
+    # and NET_RAW so they survive setpriv uid drop + exec (needed for UDP/67).
     cap_drop:
       - ALL
     cap_add:
