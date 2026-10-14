@@ -1,5 +1,5 @@
 # Alpine-based ISC Kea DHCP DDNS (multi-arch: amd64/arm64)
-FROM alpine:3.24.1
+FROM alpine:3.24
 
 LABEL org.opencontainers.image.authors="admin@example.com" \
       org.opencontainers.image.title="kea-dhcp-ddns" \
@@ -14,7 +14,8 @@ ENV KEA_ROLE=kea-dhcp-ddns \
     TZ=UTC \
     SKIP_CONFIG_TEST=false
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
         kea-dhcp-ddns \
         curl \
         tzdata \
