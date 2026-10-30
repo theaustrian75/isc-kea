@@ -241,7 +241,7 @@ jobs:
 
             case "$image" in
               kea-dhcp4)
-                BASELINE_TAGS="v1.0 v1.0-amd64 v1.0-arm64 v1.1 v1.1-amd64 v1.1-arm64 v1.2 v1.2-amd64 v1.2-arm64 v1.3 v1.3-amd64 v1.3-arm64 v1.4-amd64 v1.4-arm64 v1.5-amd64 v1.5-arm64 v1.6-amd64 v1.6-arm64 latest-amd64 latest-arm64 main-amd64 main-arm64 sha-3fcff9f sha-3fcff9f-amd64 sha-3fcff9f-arm64"
+                BASELINE_TAGS="v1.0 v1.0-amd64 v1.0-arm64 v1.1 v1.1-amd64 v1.1-arm64 v1.2 v1.2-amd64 v1.2-arm64 v1.3 v1.3-amd64 v1.3-arm64 v1.4-amd64 v1.4-arm64 v1.5-amd64 v1.5-arm64 v1.6-amd64 v1.6-arm64 sha-3fcff9f sha-3fcff9f-amd64 sha-3fcff9f-arm64"
                 ORIG_V13=sha256:d208098bb231cadde55e24d9ab16dc533ae8515eba5a1ce37234188426e6b99e
                 ORIG_V13_AMD=sha256:37fca9feae45be040e0ad117c36fe4c5dce6f29c0b0b63466acdf0eb308822d4
                 ORIG_V13_ARM=sha256:7e7569c211f30a2374d5b5cabcae6847d25de91803b63c85db5f5565d2153c39
@@ -259,7 +259,7 @@ jobs:
                 SHA_ARM=sha256:be755df379200cf76dfa030f01f3c46be87733543c0fd6e8231e1de2e2e77b7b
                 ;;
               kea-dhcp-ddns)
-                BASELINE_TAGS="v1.0 v1.0-amd64 v1.0-arm64 v1.2 v1.2-amd64 v1.2-arm64 v1.3 v1.3-amd64 v1.3-arm64 v1.4-amd64 v1.4-arm64 v1.5-amd64 v1.5-arm64 v1.6-amd64 v1.6-arm64 latest-amd64 latest-arm64 main-amd64 main-arm64 sha-3fcff9f sha-3fcff9f-amd64 sha-3fcff9f-arm64"
+                BASELINE_TAGS="v1.0 v1.0-amd64 v1.0-arm64 v1.2 v1.2-amd64 v1.2-arm64 v1.3 v1.3-amd64 v1.3-arm64 v1.4-amd64 v1.4-arm64 v1.5-amd64 v1.5-arm64 v1.6-amd64 v1.6-arm64 sha-3fcff9f sha-3fcff9f-amd64 sha-3fcff9f-arm64"
                 ORIG_V13=sha256:0dc5904fd147017ea94692971cb89f8fee8bd4bc56133f56a7c1c7f62a29ade6
                 ORIG_V13_AMD=sha256:47d3b6f3901e78584640fad27bd292ec2fa8bd48fd6dbbb77803a5f8bf531a2b
                 ORIG_V13_ARM=sha256:28d9fa7451348a6959992d888db0eaf1564302beb1d55c4c2239c332fb0d34c9
@@ -323,10 +323,9 @@ jobs:
             detach_index v1.3.2 v1.5 "$ORIG_V15" "$ORIG_V15_AMD" "$ORIG_V15_ARM"
             detach_index v1.3.3 v1.6 "$ORIG_V16" "$ORIG_V16_AMD" "$ORIG_V16_ARM"
 
-            index_points_at latest "$ORIG_V16_AMD" "$ORIG_V16_ARM"
-            index_points_at main "$ORIG_V16_AMD" "$ORIG_V16_ARM"
-            require_digest latest "$(crane digest "${REPO}:v1.3.3")"
-            require_digest main "$(crane digest "${REPO}:v1.3.3")"
+            # latest and main stay on whatever commit currently owns them.
+            # A push to main during this retag publishes a new image under those
+            # names; only a copy still attached to the retired manifest is moved.
             require_digest v1.3 "$ORIG_V13"
             require_digest sha-3fcff9f "$SHA_INDEX"
             require_digest sha-3fcff9f-amd64 "$SHA_AMD"
