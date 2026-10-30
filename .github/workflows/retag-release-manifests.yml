@@ -51,7 +51,7 @@ jobs:
           version_id() {
             local digest="$1"
             gh api --paginate --slurp "$PACKAGE" \
-              --jq "[.[][]] | map(select(.name==\"${digest}\") | .id) | first // empty"
+              | jq -r --arg digest "$digest" '[.[][]] | map(select(.name==$digest) | .id) | first // empty'
           }
 
           tags_of() {
@@ -64,22 +64,24 @@ jobs:
             gh api "${PACKAGE}/${id}" --jq '.metadata.container.tags[]?'
           }
 
+          index_matches() {
+            local tag="$1" amd="$2" arm="$3"
+            crane manifest "${REPO}:${tag}" | jq -e \
+              --arg amd "$amd" --arg arm "$arm" \
+              '(.manifests // []) | length == 2
+                and (map(select(.platform.architecture=="amd64" and (.platform.os==null or .platform.os=="linux")) | .digest) == [$amd])
+                and (map(select(.platform.architecture=="arm64" and (.platform.os==null or .platform.os=="linux")) | .digest) == [$arm])' >/dev/null
+          }
+
           index_points_at() {
             local tag="$1" amd="$2" arm="$3" manifest
-            manifest="$(crane manifest "${REPO}:${tag}")"
-            if ! jq -e \
-              --arg amd "$amd" --arg arm "$arm" \
-              '.manifests | length == 2
-                and .[0].platform.architecture == "amd64"
-                and (.[0].platform.os == null or .[0].platform.os == "linux")
-                and .[0].digest == $amd
-                and .[1].platform.architecture == "arm64"
-                and (.[1].platform.os == null or .[1].platform.os == "linux")
-                and .[1].digest == $arm' <<<"$manifest" >/dev/null; then
-              echo "index check failed for ${REPO}:${tag}" >&2
-              jq '{mediaType, manifests}' <<<"$manifest" >&2 || true
-              return 1
+            if index_matches "$tag" "$amd" "$arm"; then
+              return 0
             fi
+            manifest="$(crane manifest "${REPO}:${tag}")"
+            echo "index check failed for ${REPO}:${tag}" >&2
+            jq '{mediaType, manifests}' <<<"$manifest" >&2 || true
+            return 1
           }
 
           require_digest() {
@@ -117,7 +119,7 @@ jobs:
               echo "${new} already on the published manifest"
               return 0
             fi
-            if index_points_at "$new" "$amd" "$arm"; then
+            if index_matches "$new" "$amd" "$arm"; then
               echo "${new} already references the published architecture images"
               return 0
             fi
